@@ -15,8 +15,31 @@ const CreatePost = () => {
   const [generatingImg, setGeneratingImg] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if(form.prompt && form.photo){
+      setLoading(true);
 
+      try {
+        const response =  await fetch('http://localhost:8080/api/v1/post',{
+          method:'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body : JSON.stringify(form)
+        })
+        await response.json();
+        navigate('/');
+      } catch (error) {
+        alert(err);
+      } finally {
+        setLoading(false);
+      }
+    } 
+
+    else{
+      alert('Please enter a prompt and generate a image');
+    }
   }
 
   const handleChange = (e) => {
@@ -28,8 +51,31 @@ const CreatePost = () => {
     setForm({...form, prompt: randomPrompt});
   }
 
-  const generatingImage = () => {
+  const generateImage = async () => {
+    if(form.prompt){
+      try {
+        setGeneratingImg(true);
+        const response = await fetch('http://localhost:8080/api/v1/dalle', {
+          method: 'post',
+          headers: { 
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({prompt : form.prompt}),
+        })
 
+        const data = await response.json();
+
+        setForm({...form, photo:`data:image/jpeg;base64,${data.photo}`});
+      } catch (error) {
+        alert(error);
+      } finally {
+        setGeneratingImg(false);
+      }
+    }
+
+    else{
+      alert('Please enter a prompt');
+    }
   }
 
   return (
@@ -53,7 +99,7 @@ const CreatePost = () => {
           labelName="Prompt"
           type="text"
           name="prompt"
-          placeholder="A plush toy robot sitting against a yellow wall"
+          placeholder="An Impressionist oil painting of sunflowers in a purple vase…"
           value={form.prompt}
           handleChange={handleChange}
           isSurpriseMe
@@ -88,7 +134,7 @@ const CreatePost = () => {
         <div className='mt-5 flex gap-5'>
           <button
             type='button'
-            onClick={generatingImage}
+            onClick={generateImage}
             className='text-white bg-green-700 font-medium rounded-md text-sm w-full sm:w-auto px-5 py-2.5
             text-center'
           >
